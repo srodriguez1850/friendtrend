@@ -5,6 +5,7 @@
 * Change hover tooltip to show messages/days interacted and message recipient
 * Change config bar to get rid of unnecessary options
 * Scramble names deterministically for privacy during presentation
+* Add outlines to datapoints so it's easier to see
 * Possibly scrap:
 	* Top X slider: no time and legends allows us to pick top X
 	* Change color on hover: seems to be hybrid python/js, no time
