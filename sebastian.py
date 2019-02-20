@@ -39,7 +39,7 @@ for p in year_count_dict:
     if p == 'METADATA':
         continue
     year_count_dict[p]['total_count'] = sum(year_count_dict[p]['y_values'])
-    year_count_dict[p]['plot_obj_scatter'] = go.Scattergl(x=year_count_dict[p]['x_values'], y=year_count_dict[p]['y_values'], mode='markers', name=p, visible=True)
+    year_count_dict[p]['plot_obj_scatter'] = go.Scattergl(x=year_count_dict[p]['x_values'], y=year_count_dict[p]['y_values'], mode='lines+markers', name=p, visible=True)
     year_count_dict['METADATA']['total_counts'][p] = year_count_dict[p]['total_count']
 
 # Parse month counts (12 graphs per month)
@@ -58,7 +58,7 @@ for p in month_count_dict:
         continue
     for y, v in month_count_dict[p].items():
         month_count_dict[p][y]['total_counts'] = sum(month_count_dict[p][y]['y_values'])
-        month_count_dict[p][y]['plot_obj_scatter'] = go.Scattergl(x=month_count_dict[p][y]['x_values'], y=month_count_dict[p][y]['y_values'], mode='markers', name=p, visible=False)
+        month_count_dict[p][y]['plot_obj_scatter'] = go.Scattergl(x=month_count_dict[p][y]['x_values'], y=month_count_dict[p][y]['y_values'], mode='lines+markers', name=p, visible=False)
         month_count_dict['METADATA'][y]['total_counts'][p] = month_count_dict[p][y]['total_counts']
 
 # Keep trace statuses for button interactivity
