@@ -6,6 +6,7 @@
 * Change config bar to get rid of unnecessary options
 * Scramble names deterministically for privacy during presentation
 * Add outlines to datapoints so it's easier to see
+* Log scale for Y data
 * Possibly scrap:
 	* Top X slider: no time and legends allows us to pick top X
 	* Change color on hover: seems to be hybrid python/js, no time
