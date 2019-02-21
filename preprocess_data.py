@@ -92,11 +92,10 @@ def process_messages_by_year(all_msgs):
     # print("\n\n")
     # pp.pprint(msgs_by_year[2019])
 
-    for old_key in msgs_by_year.keys():
+    old_years = list(msgs_by_year.keys())
+    for old_key in old_years:
         new_key = str(old_key) + "-01-01"
         msgs_by_year[new_key] = msgs_by_year.pop(old_key)
-
-    print(msgs_by_year.keys())
 
     with open("messages_yearly_scratch.json", "w") as f:
         json.dump(msgs_by_year, f)
@@ -132,7 +131,8 @@ def process_days_interacted_by_year(all_msgs):
     # print("\n\n")
     # pp.pprint(msgs_by_year[2019])
 
-    for old_key in msgs_by_year.keys():
+    old_years = list(msgs_by_year.keys())
+    for old_key in old_years:
         new_key = str(old_key) + "-01-01"
         msgs_by_year[new_key] = msgs_by_year.pop(old_key)
 
@@ -204,4 +204,4 @@ def process_messages_by_month(all_msgs):
     with open("messages_monthly_scratch.json", "w") as f:
         json.dump(msgs_by_year, f)
 
-process_messages_by_month(all_msgs)
+# process_messages_by_year(all_msgs)
