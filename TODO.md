@@ -6,7 +6,7 @@
 * Change config bar to get rid of unnecessary options (Dennis)
 * Scramble names deterministically for privacy during presentation (Prashant)
 * Add outlines to datapoints so it's easier to see (Dennis)
-* Log scale for Y data (Sebastian)
+* ~~Log scale for Y data~~ (Sebastian)
 * Top 10 per year then append together in Global (Sebastian)
 * Possibly scrap:
 	* Top X slider: no time and legends allows us to pick top X
