@@ -21,6 +21,6 @@
 ## Contributions
 
 * Prashant Jayannavar: viz design ideas, Messenger dump parser, debugging
-* Dennis Wang: viz design ideas, viz aesthetics, program
+* Dennis Wang: viz design ideas, code viz aesthetics
 * Sebastian Rodriguez: code, viz design feedback, debugging
 * India Owens: code, viz design feedback, debugging
