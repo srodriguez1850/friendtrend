@@ -1,11 +1,15 @@
+#!/usr/bin/python
+
 import plotly
 import plotly.graph_objs as go
-from plotly import tools
+import preprocess_data as prepdata
+import argparse
 import json
+import os
+from plotly import tools
 from collections import defaultdict, Counter
 from fnvhash import fnv1a_32
 from enum import Enum
-import preprocess_data as prepdata
 
 ## ENUMS ##
 class TopKFormat(Enum):
@@ -19,21 +23,19 @@ TOP_K_PEOPLE = 10
 TOP_K_FORMAT = TopKFormat.MONTHLY
 INCLUDE_FACEBOOKUSER = False
 SCRAMBLE_NAMES = False
+VIZ_TARGET_DIRECTORY = 'viz'
+MARKER_SIZE = 15
+MARKER_OUTLINE_SIZE = 1.5
+# if actively editing the code and want a hardcoded location instead of params, edit these
+IDE_DEBUGGING = False
+IDE_DEBUGGING_NAME = 'Sebastian Rodriguez'
 
 ## INTERNAL DEFINITIONS ##
 _SCRAMBLE_NAMES = 0 if SCRAMBLE_NAMES is False else 1
 
-MARKER_SIZE = 15
-MARKER_OUTLINE_SIZE = 1.5
 
 ## HELPER METHODS ##
-# String reverser to hide names
-def reverse(s):
-    str = "" 
-    for i in s: 
-        str = i + str
-    return str
-
+#region
 def name_to_color(name):
     hash = fnv1a_32(name.encode('utf-8'))
     r = (hash & 0xFF000000) >> 24
@@ -41,6 +43,7 @@ def name_to_color(name):
     b = (hash & 0x0000FF00) >> 8
     val = 'rgb({}, {}, {})'.format(int(r), int(g), int(b))
     return val
+#endregion
 
 def generate_viz(year_data, month_data, filename, title):
 
@@ -342,7 +345,7 @@ def generate_viz(year_data, month_data, filename, title):
         barmode='stack',
 		showlegend=True,
         legend=dict(traceorder='normal'),
-		yaxis=dict(
+		yaxis1=dict(
 			type='linear',
 			autorange=True,
             domain=[0.51, 1]
@@ -352,10 +355,18 @@ def generate_viz(year_data, month_data, filename, title):
 			autorange=True,
             domain=[0, 0.49]
 		),
-        xaxis=dict(
+        xaxis1=dict(
             type='date',
+            showgrid=True,
             autorange=True,
             visible=False
+        ),
+        xaxis2=dict(
+            type='date',
+            tickformat='%b %Y',
+            showgrid=True,
+            autorange=True,
+            visible=True
         ))
 
     config = {
@@ -367,6 +378,27 @@ def generate_viz(year_data, month_data, filename, title):
     plotly.offline.plot(fig, auto_open=True, config=config, filename=filename)
 
 if __name__== "__main__":
-    datasets = prepdata.main('data/messages/inbox/', 'Sebastian Rodriguez', False)
-    generate_viz(datasets.messages_yearly, datasets.messages_monthly, 'messages.html', 'Total Messages')
-    generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, 'daysinteracted.html', 'Days Interacted')
+
+    try:
+        os.mkdir(VIZ_TARGET_DIRECTORY)
+    except FileExistsError:
+        pass
+
+    if IDE_DEBUGGING is False:
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument('--datapath', default='data/messages/inbox/', help='path to the messages/inbox sub-directory in the Messenger data dump')
+        parser.add_argument('name', help='your Facebook display name (as written)')
+
+        args = parser.parse_args()
+
+        datasets = prepdata.main(args.datapath, args.name, False)
+
+        generate_viz(datasets.messages_yearly, datasets.messages_monthly, VIZ_TARGET_DIRECTORY + '/' + args.name + '-messages.html', 'Total Messages')
+        generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, VIZ_TARGET_DIRECTORY + '/' + args.name + '-daysinteracted.html', 'Days Interacted')
+    else:
+        datasets = prepdata.main('data/messages/inbox/', IDE_DEBUGGING_NAME, False)
+
+        generate_viz(datasets.messages_yearly, datasets.messages_monthly, VIZ_TARGET_DIRECTORY + '/' + IDE_DEBUGGING_NAME + '-messages.html', 'Total Messages')
+        generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, VIZ_TARGET_DIRECTORY + '/' + IDE_DEBUGGING_NAME + '-daysinteracted.html', 'Days Interacted')
+    
