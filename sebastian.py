@@ -3,12 +3,23 @@ import plotly.graph_objs as go
 import json
 from collections import defaultdict, Counter
 from fnvhash import fnv1a_32
+from enum import Enum
+
+## ENUMS ##
+class TopKFormat(Enum):
+    GLOBAL_K = 0
+    MONTH_CUMULATIVE = 1
 
 ## DEFINITIONS ##
 MESSENGER_START = 2009
 MESSENGER_END = 2019
-TOP_PEOPLE = 10
+TOP_K_PEOPLE = 10
+TOP_K_FORMAT = TopKFormat.MONTH_CUMULATIVE
 INCLUDE_FACEBOOKUSER = False
+SCRAMBLE_NAMES = False
+
+## INTERNAL DEFINITIONS ##
+_SCRAMBLE_NAMES = 0 if SCRAMBLE_NAMES is False else 1
 
 MARKER_SIZE = 15
 MARKER_OUTLINE_SIZE = 1.5
@@ -43,8 +54,8 @@ def generate_messages_viz():
         for recp in v:
             if ((recp[0].split('_')[0] == 'facebookuser') and (INCLUDE_FACEBOOKUSER is False)):
                 continue
-            year_count_dict[recp[0].split('_')[0]]['x_values'].append(str(y))
-            year_count_dict[recp[0].split('_')[0]]['y_values'].append(recp[1])
+            year_count_dict[recp[0].split('_', 1)[_SCRAMBLE_NAMES]]['x_values'].append(str(y))
+            year_count_dict[recp[0].split('_', 1)[_SCRAMBLE_NAMES]]['y_values'].append(recp[1])
 
     for p in year_count_dict:
         if p == 'METADATA':
@@ -61,8 +72,8 @@ def generate_messages_viz():
             for recp in v0:
                 if ((recp[0].split('_')[0] == 'facebookuser') and (INCLUDE_FACEBOOKUSER is False)):
                     continue
-                month_count_dict[recp[0].split('_')[0]][y]['x_values'].append(str(m))
-                month_count_dict[recp[0].split('_')[0]][y]['y_values'].append(recp[1])
+                month_count_dict[recp[0].split('_', 1)[_SCRAMBLE_NAMES]][y]['x_values'].append(str(m))
+                month_count_dict[recp[0].split('_', 1)[_SCRAMBLE_NAMES]][y]['y_values'].append(recp[1])
 
     for p in month_count_dict:
         if p == 'METADATA':
@@ -78,32 +89,45 @@ def generate_messages_viz():
     trace_status['scatter']['year_view'] = []
     trace_status['scatter']['month_view'] = {}
     for y in range(MESSENGER_START, MESSENGER_END + 1):
-        trace_status['scatter']['month_view'][str(y)] = []
+        trace_status['scatter']['month_view'][str(y) + '-01-01'] = []
     trace_status['box'] = {}
 
-    # Generate list of top people
-    top_ppl_years = Counter(year_count_dict['METADATA']['total_counts']).most_common(TOP_PEOPLE)
+    # Generate list of top people (based on option)
+    top_ppl_years = defaultdict(int)
+    top_ppl_months = dict()
+    if TOP_K_FORMAT is TopKFormat.GLOBAL_K:
+        # populate year view
+        top_ppl_years = Counter(year_count_dict['METADATA']['total_counts']).most_common(TOP_K_PEOPLE)
+        # populate month view
+        for y in month_count_dict['METADATA']:
+            top_ppl_months[y] = Counter(month_count_dict['METADATA'][y]['total_counts']).most_common(TOP_K_PEOPLE)
+    elif TOP_K_FORMAT is TopKFormat.MONTH_CUMULATIVE:
+        # populate month view
+        for y in month_count_dict['METADATA']:
+            top_ppl_months[y] = Counter(month_count_dict['METADATA'][y]['total_counts']).most_common(TOP_K_PEOPLE)
+        # use month view to populate year view
+        for y in top_ppl_months:
+            for p in top_ppl_months[y]:
+                top_ppl_years[p[0]] += p[1]
 
-    top_ppl_months = {}
-    for y in month_count_dict['METADATA']:
-        top_ppl_months[y] = Counter(month_count_dict['METADATA'][y]['total_counts']).most_common(TOP_PEOPLE)
 
     # Populate data based on top people
     data = list()
     data_debug_count = 0
-    for p in top_ppl_years:
-        data.append(year_count_dict[p[0]]['plot_obj_scatter'])
+    for p in sorted(top_ppl_years, key=top_ppl_years.get, reverse=True):
+        data.append(year_count_dict[p]['plot_obj_scatter'])
         trace_status['scatter']['year_view'].append({
                     'person': p,
                 })
 
     for y in range(MESSENGER_START, MESSENGER_END + 1):
-        for j in top_ppl_months[str(y)]:
-            if (month_count_dict[j[0]][str(y)]['plot_obj_scatter'] == []):
+        y0 = str(y) + '-01-01'
+        for j in top_ppl_months[y0]:
+            if (month_count_dict[j][y0]['plot_obj_scatter'] == []):
                 continue
-            data.append(month_count_dict[j[0]][str(y)]['plot_obj_scatter'])
-            trace_status['scatter']['month_view'][str(y)].append({
-                    'person': j[0],
+            data.append(month_count_dict[j][y0]['plot_obj_scatter'])
+            trace_status['scatter']['month_view'][y0].append({
+                    'person': j,
                     'year': y
                 })
 
@@ -205,6 +229,7 @@ def generate_messages_viz():
 
     plotly.offline.plot(fig, auto_open=False, filename='messages.html')
 
+# update the hell out of this method too (even try to make them 1)
 def generate_daysinteracted_viz():
     # Load data
     json_year_count_data = json.loads(open('days_interacted_yearly_scratch.json').read())
@@ -258,11 +283,11 @@ def generate_daysinteracted_viz():
     trace_status['box'] = {}
 
     # Generate list of top people
-    top_ppl_years = Counter(year_count_dict['METADATA']['total_counts']).most_common(TOP_PEOPLE)
+    top_ppl_years = Counter(year_count_dict['METADATA']['total_counts']).most_common(TOP_K_PEOPLE)
 
     top_ppl_months = {}
     for y in month_count_dict['METADATA']:
-        top_ppl_months[y] = Counter(month_count_dict['METADATA'][y]['total_counts']).most_common(TOP_PEOPLE)
+        top_ppl_months[y] = Counter(month_count_dict['METADATA'][y]['total_counts']).most_common(TOP_K_PEOPLE)
 
     # Populate data based on top people
     data = list()
