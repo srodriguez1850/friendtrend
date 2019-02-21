@@ -204,4 +204,68 @@ def process_messages_by_month(all_msgs):
     with open("messages_monthly_scratch.json", "w") as f:
         json.dump(msgs_by_year, f)
 
-# process_messages_by_year(all_msgs)
+def process_days_interacted_by_month(all_msgs):
+
+    # group by year
+    msgs_by_year = {}
+    for year, group in itertools.groupby(sorted(all_msgs, key = lambda x: x["year"]), key = lambda x: x["year"]):
+        msgs_by_year[year] = list(group)
+
+    # pp.pprint(msgs_by_year[2019])
+
+    for key, value in msgs_by_year.items():
+        msgs_by_month = {}
+        for month, group in itertools.groupby(sorted(value, key = lambda x: x["month"]), key = lambda x: x["month"]):
+            msgs_by_month[month] = list(group)
+        msgs_by_year[key] = msgs_by_month
+
+    for key, value in msgs_by_year.items():
+        for key2, value2 in value.items():
+            msgs_by_friend = {}
+            for my_friend_id, group in itertools.groupby(sorted(value2, key = lambda x: x["my_friend_id"]), key = lambda x: x["my_friend_id"]):
+                msgs_by_friend[my_friend_id] = list(group)
+            msgs_by_year[key][key2] = msgs_by_friend
+
+    # print("\n\n")
+    # pp.pprint(msgs_by_year[2019])
+
+    for key, value in msgs_by_year.items():
+        for key2, value2 in value.items():
+            for key3, value3 in value2.items():
+                msgs_by_year[key][key2][key3] = len(set(map(lambda x: (x["day"], x["month"], x["year"]), value3)))
+    # print("\n\n")
+    # pp.pprint(msgs_by_year[2019])
+
+    for key, value in msgs_by_year.items():
+        for key2, value2 in value.items():
+            msgs_by_year[key][key2] = sorted(value2.items(), key = lambda x: x[1], reverse = True)
+
+    # print("\n\n")
+    # pp.pprint(msgs_by_year[2019])
+
+    old_years = list(msgs_by_year.keys())
+    for old_year in old_years:
+        print(old_year)
+        new_year = str(old_year) + "-01-01"
+
+        old_months = list(msgs_by_year[old_year].keys())
+        for old_month in old_months:
+            print(old_month)
+            if old_month < 10:
+                old_month_str = "0" + str(old_month)
+            else:
+                old_month_str = str(old_month)
+            new_month = str(old_year) + "-" + old_month_str + "-01"
+            msgs_by_year[old_year][new_month] = msgs_by_year[old_year].pop(old_month)
+            print(new_month)
+
+        msgs_by_year[new_year] = msgs_by_year.pop(old_year)
+        print(new_year)
+        print("\n\n\n\n")
+
+    # print(msgs_by_year.keys())
+
+    with open("days_interacted_monthly_scratch.json", "w") as f:
+        json.dump(msgs_by_year, f)
+
+process_days_interacted_by_month(all_msgs)
