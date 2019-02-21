@@ -7,6 +7,9 @@
 * Deselect all options and only check 'Messages', ensure the format is in 'JSON', and click 'Create File' on the top right
 * Go eat lunch/dinner because it'll take a while.
 * Download the dataset once it's ready, make a 'data/' directory within this project's root directory and unzip the dataset inside 'data/'.
+* Install all needed dependencies (pip install X)
+	* plotly
+	* fnvhash
 * Run 'friendtrend.py' with your Facebook display name as a parameter (e.g., python friendtrend.py 'Dennis Wang').
 	* --datapath [str]: use a custom path instead of the default path of 'data/messages/inbox' from this root directory.
 	* --hidenames: scramble the names for privacy
