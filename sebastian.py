@@ -227,7 +227,11 @@ def generate_viz(year_data, month_data, filename):
         "layout": layout
     }
 
-    plotly.offline.plot(fig, auto_open=False, filename=filename)
+    config = {
+        'modeBarButtonsToRemove' : ['toImage', 'select2d', 'lasso2d', 'toggleSpikelines']        
+    }
+
+    plotly.offline.plot(fig, auto_open=False, config=config, filename=filename)
 
 if __name__== "__main__":
     generate_viz('messages_yearly_scratch.json', 'messages_monthly_scratch.json', 'messages.html')
