@@ -45,7 +45,13 @@ def name_to_color(name):
     return val
 #endregion
 
-def generate_viz(year_data, month_data, filename, title):
+def generate_viz(year_data, month_data, filename, title, hidenames, k, kformat):
+
+    # Load flags
+    SCRAMBLE_NAMES = hidenames
+    _SCRAMBLE_NAMES = 0 if SCRAMBLE_NAMES is False else 1
+    TOP_K_PEOPLE = k
+    TOP_K_FORMAT = TopKFormat.GLOBAL_K if kformat else TopKFormat.MONTHLY
 
     # Load data
     json_year_count_data = year_data
@@ -357,9 +363,10 @@ def generate_viz(year_data, month_data, filename, title):
 		),
         xaxis1=dict(
             type='date',
+            tickformat='%b %Y',
             showgrid=True,
             autorange=True,
-            visible=False
+            visible=True
         ),
         xaxis2=dict(
             type='date',
@@ -388,17 +395,20 @@ if __name__== "__main__":
         parser = argparse.ArgumentParser()
 
         parser.add_argument('--datapath', default='data/messages/inbox/', help='path to the messages/inbox sub-directory in the Messenger data dump')
+        parser.add_argument('--hidenames', default=False, action='store_true', help='whether or not to use real names in the visualization')
+        parser.add_argument('--topk', default=10, type=int, help='number of top K friends to show')
+        parser.add_argument('--topkglobal', default=False, action='store_true', help='populate the top K friends globally and display <K for each monthly view')
         parser.add_argument('name', help='your Facebook display name (as written)')
 
         args = parser.parse_args()
 
         datasets = prepdata.main(args.datapath, args.name, False)
 
-        generate_viz(datasets.messages_yearly, datasets.messages_monthly, VIZ_TARGET_DIRECTORY + '/' + args.name + '-messages.html', 'Total Messages')
-        generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, VIZ_TARGET_DIRECTORY + '/' + args.name + '-daysinteracted.html', 'Days Interacted')
+        generate_viz(datasets.messages_yearly, datasets.messages_monthly, VIZ_TARGET_DIRECTORY + '/' + args.name + '-messages.html', 'Total Messages', args.hidenames, args.topk, args.topkglobal)
+        generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, VIZ_TARGET_DIRECTORY + '/' + args.name + '-daysinteracted.html', 'Days Interacted', args.hidenames, args.topk, args.topkglobal)
     else:
-        datasets = prepdata.main('data/messages/inbox/', IDE_DEBUGGING_NAME, False)
+        datasets = prepdata.main('data/messages/inbox/', IDE_DEBUGGING_NAME, False, args.hidenames, args.topk, args.topkglobal)
 
-        generate_viz(datasets.messages_yearly, datasets.messages_monthly, VIZ_TARGET_DIRECTORY + '/' + IDE_DEBUGGING_NAME + '-messages.html', 'Total Messages')
-        generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, VIZ_TARGET_DIRECTORY + '/' + IDE_DEBUGGING_NAME + '-daysinteracted.html', 'Days Interacted')
+        generate_viz(datasets.messages_yearly, datasets.messages_monthly, VIZ_TARGET_DIRECTORY + '/' + IDE_DEBUGGING_NAME + '-messages.html', 'Total Messages', args.hidenames, args.topk, args.topkglobal)
+        generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, VIZ_TARGET_DIRECTORY + '/' + IDE_DEBUGGING_NAME + '-daysinteracted.html', 'Days Interacted', args.hidenames, args.topk, args.topkglobal)
     
