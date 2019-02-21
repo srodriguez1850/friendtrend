@@ -45,6 +45,7 @@ def process(json):
             "my_friend_id": json["my_friend_id"],
             "year": datetime_obj.year,
             "month": datetime_obj.month,
+            "day": datetime_obj.day
         }
 
         return transformed_msg
@@ -100,4 +101,42 @@ def process_messages_by_year(all_msgs):
     with open("messages_yearly_scratch.json", "w") as f:
         json.dump(msgs_by_year, f)
 
-process_messages_by_year(all_msgs)
+def process_days_interacted_by_year(all_msgs):
+
+    # group by year
+    msgs_by_year = {}
+    for year, group in itertools.groupby(sorted(all_msgs, key = lambda x: x["year"]), key = lambda x: x["year"]):
+        msgs_by_year[year] = list(group)
+
+    # pp.pprint(msgs_by_year[2019])
+
+    for key, value in msgs_by_year.items():
+        msgs_by_friend = {}
+        for my_friend_id, group in itertools.groupby(sorted(value, key = lambda x: x["my_friend_id"]), key = lambda x: x["my_friend_id"]):
+            msgs_by_friend[my_friend_id] = list(group)
+        msgs_by_year[key] = msgs_by_friend
+
+    # print("\n\n")
+    # pp.pprint(msgs_by_year[2019])
+
+    for key, value in msgs_by_year.items():
+        for key2, value2 in value.items():
+            msgs_by_year[key][key2] = len(set(map(lambda x: (x["day"], x["month"], x["year"]), value2)))
+
+    # print("\n\n")
+    # pp.pprint(msgs_by_year[2019])
+
+    for key, value in msgs_by_year.items():
+        msgs_by_year[key] = sorted(value.items(), key = lambda x: x[1], reverse = True)
+
+    # print("\n\n")
+    # pp.pprint(msgs_by_year[2019])
+
+    for old_key in msgs_by_year.keys():
+        new_key = str(old_key) + "-01-01"
+        msgs_by_year[new_key] = msgs_by_year.pop(old_key)
+
+    with open("days_interacted_yearly_scratch.json", "w") as f:
+        json.dump(msgs_by_year, f)
+
+process_days_interacted_by_year(all_msgs)
