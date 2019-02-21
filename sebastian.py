@@ -9,7 +9,9 @@ MESSENGER_START = 2009
 MESSENGER_END = 2019
 TOP_PEOPLE = 10
 INCLUDE_FACEBOOKUSER = False
+
 MARKER_SIZE = 15
+MARKER_OUTLINE_SIZE = 1.5
 
 ## HELPER METHODS ##
 # String reverser to hide names
@@ -48,7 +50,7 @@ def generate_messages_viz():
         if p == 'METADATA':
             continue
         year_count_dict[p]['total_count'] = sum(year_count_dict[p]['y_values'])
-        year_count_dict[p]['plot_obj_scatter'] = go.Scattergl(x=year_count_dict[p]['x_values'], y=year_count_dict[p]['y_values'], mode='lines+markers', name=p, visible=True, marker = dict(size=MARKER_SIZE, color=name_to_color(p)))
+        year_count_dict[p]['plot_obj_scatter'] = go.Scattergl(x=year_count_dict[p]['x_values'], y=year_count_dict[p]['y_values'], mode='lines+markers', name=p, visible=True, marker = dict(size=MARKER_SIZE, color=name_to_color(p), line=dict(width=MARKER_OUTLINE_SIZE)))
         year_count_dict['METADATA']['total_counts'][p] = year_count_dict[p]['total_count']
 
     # Parse month counts (12 graphs per month)
@@ -67,7 +69,7 @@ def generate_messages_viz():
             continue
         for y, v in month_count_dict[p].items():
             month_count_dict[p][y]['total_counts'] = sum(month_count_dict[p][y]['y_values'])
-            month_count_dict[p][y]['plot_obj_scatter'] = go.Scattergl(x=month_count_dict[p][y]['x_values'], y=month_count_dict[p][y]['y_values'], mode='lines+markers', name=p, visible=False, marker = dict(size=MARKER_SIZE, color=name_to_color(p)))
+            month_count_dict[p][y]['plot_obj_scatter'] = go.Scattergl(x=month_count_dict[p][y]['x_values'], y=month_count_dict[p][y]['y_values'], mode='lines+markers', name=p, visible=False, marker = dict(size=MARKER_SIZE, color=name_to_color(p), line=dict(width=MARKER_OUTLINE_SIZE)))
             month_count_dict['METADATA'][y]['total_counts'][p] = month_count_dict[p][y]['total_counts']
 
     # Keep trace statuses for button interactivity
@@ -161,15 +163,38 @@ def generate_messages_viz():
             y = -0.1,
             yanchor = 'auto' 
         ),
-    ])
+        dict(
+            type='dropdown',
+            buttons=list([
+            dict(label = 'Linear',
+                 method = 'relayout',
+                 args = [dict(yaxis=dict(type='linear', autorange=True))]),
+            dict(label = 'Log',
+                 method = 'relayout',
+                 args = [dict(yaxis=dict(type='log', autorange=True))])]),
+            direction = 'down',
+            showactive = True,
+            x = -0.075,
+            xanchor = 'left',
+            y = 1,
+            yanchor = 'top'
+        )])
 
     layout = go.Layout(
-        title='FriendsList',
-        autosize=True,
-        updatemenus=updatemenus,
-        hovermode='closest',
-        showlegend=True
+		title='FriendsList',
+		autosize=True,
+		updatemenus=updatemenus,
+		hovermode='closest',
+		showlegend=True,
+		yaxis=dict(
+			type='linear',
+			autorange=True
+		),
+        xaxis=dict(
+            type='date',
+            autorange=True
         )
+    )
 
     # dont forget the config to get rid of buttons we dont need
 
@@ -317,12 +342,16 @@ def generate_daysinteracted_viz():
     ])
 
     layout = go.Layout(
-        title='FriendsList',
-        autosize=True,
-        updatemenus=updatemenus,
-        hovermode='closest',
-        showlegend=True
-        )
+		title='FriendsList',
+		autosize=True,
+		updatemenus=updatemenus,
+		hovermode='closest',
+		showlegend=True,
+		yaxis=dict(
+			type='log',
+			autorange=True
+		)
+    )
 
     # dont forget the config to get rid of buttons we dont need
 
@@ -335,4 +364,4 @@ def generate_daysinteracted_viz():
 
 if __name__== "__main__":
   generate_messages_viz()
-  generate_daysinteracted_viz()
+  #generate_daysinteracted_viz()
