@@ -5,17 +5,18 @@ import json
 from collections import defaultdict, Counter
 from fnvhash import fnv1a_32
 from enum import Enum
+import preprocess_data as prepdata
 
 ## ENUMS ##
 class TopKFormat(Enum):
     GLOBAL_K = 0
-    MONTH_CUMULATIVE = 1
+    MONTHLY = 1
 
 ## DEFINITIONS ##
 MESSENGER_START = 2009
 MESSENGER_END = 2019
 TOP_K_PEOPLE = 10
-TOP_K_FORMAT = TopKFormat.MONTH_CUMULATIVE
+TOP_K_FORMAT = TopKFormat.MONTHLY
 INCLUDE_FACEBOOKUSER = False
 SCRAMBLE_NAMES = False
 
@@ -41,11 +42,11 @@ def name_to_color(name):
     val = 'rgb({}, {}, {})'.format(int(r), int(g), int(b))
     return val
 
-def generate_viz(year_data, month_data, filename):
+def generate_viz(year_data, month_data, filename, title):
 
     # Load data
-    json_year_count_data = json.loads(open(year_data).read())
-    json_month_count_data = json.loads(open(month_data).read())
+    json_year_count_data = year_data
+    json_month_count_data = month_data
 
     # Parse scatterplot to dictionaries
     # region
@@ -63,7 +64,7 @@ def generate_viz(year_data, month_data, filename):
         if p == 'METADATA':
             continue
         year_count_dict[p]['total_count'] = sum(year_count_dict[p]['y_values'])
-        year_count_dict[p]['plot_obj_scatter'] = go.Scattergl(x=year_count_dict[p]['x_values'], y=year_count_dict[p]['y_values'], mode='lines+markers', name=p, visible=True, marker = dict(size=MARKER_SIZE, color=name_to_color(p), line=dict(width=MARKER_OUTLINE_SIZE)), hoverinfo="y+text", text='{}'.format(p))
+        year_count_dict[p]['plot_obj_scatter'] = go.Scattergl(x=year_count_dict[p]['x_values'], y=year_count_dict[p]['y_values'], mode='lines+markers', name=p, visible=True, marker = dict(size=MARKER_SIZE, color=name_to_color(p), line=dict(width=MARKER_OUTLINE_SIZE)), hoverinfo="y+name")
         year_count_dict['METADATA']['total_counts'][p] = year_count_dict[p]['total_count']
 
     # Parse month counts (12 graphs per month)
@@ -82,7 +83,7 @@ def generate_viz(year_data, month_data, filename):
             continue
         for y, v in month_count_dict[p].items():
             month_count_dict[p][y]['total_counts'] = sum(month_count_dict[p][y]['y_values'])
-            month_count_dict[p][y]['plot_obj_scatter'] = go.Scattergl(x=month_count_dict[p][y]['x_values'], y=month_count_dict[p][y]['y_values'], mode='lines+markers', name=p, visible=False, marker = dict(size=MARKER_SIZE, color=name_to_color(p), line=dict(width=MARKER_OUTLINE_SIZE)), hoverinfo="y+text", text='{}'.format(p))
+            month_count_dict[p][y]['plot_obj_scatter'] = go.Scattergl(x=month_count_dict[p][y]['x_values'], y=month_count_dict[p][y]['y_values'], mode='lines+markers', name=p, visible=False, marker = dict(size=MARKER_SIZE, color=name_to_color(p), line=dict(width=MARKER_OUTLINE_SIZE)), hoverinfo="y+name")
             month_count_dict['METADATA'][y]['total_counts'][p] = month_count_dict[p][y]['total_counts']
     # endregion
 
@@ -102,7 +103,7 @@ def generate_viz(year_data, month_data, filename):
         if p == 'METADATA':
             continue
         byear_count_dict[p]['total_count'] = sum(byear_count_dict[p]['y_values'])
-        byear_count_dict[p]['plot_obj_scatter'] = go.Bar(x=byear_count_dict[p]['x_values'], y=byear_count_dict[p]['y_values'], name=p, visible=True, marker = dict(color=name_to_color(p)))
+        byear_count_dict[p]['plot_obj_scatter'] = go.Bar(x=byear_count_dict[p]['x_values'], y=byear_count_dict[p]['y_values'], name=p, showlegend=False, visible=True, marker = dict(color=name_to_color(p)), hoverinfo="y+name")
         byear_count_dict['METADATA']['total_counts'][p] = byear_count_dict[p]['total_count']
 
     # Parse month counts (12 graphs per month)
@@ -121,7 +122,7 @@ def generate_viz(year_data, month_data, filename):
             continue
         for y, v in bmonth_count_dict[p].items():
             bmonth_count_dict[p][y]['total_counts'] = sum(bmonth_count_dict[p][y]['y_values'])
-            bmonth_count_dict[p][y]['plot_obj_scatter'] = go.Bar(x=bmonth_count_dict[p][y]['x_values'], y=bmonth_count_dict[p][y]['y_values'], name=p, visible=False, marker = dict(color=name_to_color(p)))
+            bmonth_count_dict[p][y]['plot_obj_scatter'] = go.Bar(x=bmonth_count_dict[p][y]['x_values'], y=bmonth_count_dict[p][y]['y_values'], name=p, showlegend=False, visible=False, marker = dict(color=name_to_color(p)), hoverinfo="y+name")
             bmonth_count_dict['METADATA'][y]['total_counts'][p] = bmonth_count_dict[p][y]['total_counts']
     # endregion
 
@@ -156,7 +157,7 @@ def generate_viz(year_data, month_data, filename):
             top_ppl_months[y] = Counter(month_count_dict['METADATA'][y]['total_counts']).most_common(TOP_K_PEOPLE)
         for y in bmonth_count_dict['METADATA']:
             btop_ppl_months[y] = Counter(bmonth_count_dict['METADATA'][y]['total_counts']).most_common(TOP_K_PEOPLE)
-    elif TOP_K_FORMAT is TopKFormat.MONTH_CUMULATIVE:
+    elif TOP_K_FORMAT is TopKFormat.MONTHLY:
         # populate month view
         for y in month_count_dict['METADATA']:
             top_ppl_months[y] = Counter(month_count_dict['METADATA'][y]['total_counts']).most_common(TOP_K_PEOPLE)
@@ -175,11 +176,18 @@ def generate_viz(year_data, month_data, filename):
     # region
     # Scatter
     data = list()
-    for p in sorted(top_ppl_years, key=top_ppl_years.get, reverse=True):
-        data.append(year_count_dict[p]['plot_obj_scatter'])
-        trace_status['year_view'].append({
-                    'person': p,
-                })
+    if TOP_K_FORMAT is TopKFormat.GLOBAL_K:
+        for p in top_ppl_years:
+            data.append(year_count_dict[p[0]]['plot_obj_scatter'])
+            trace_status['year_view'].append({
+                        'person': p,
+                    })
+    elif TOP_K_FORMAT is TopKFormat.MONTHLY:
+        for p in sorted(top_ppl_years, key=top_ppl_years.get, reverse=True):
+            data.append(year_count_dict[p]['plot_obj_scatter'])
+            trace_status['year_view'].append({
+                        'person': p,
+                    })
 
     for y in range(MESSENGER_START, MESSENGER_END + 1):
         y0 = str(y) + '-01-01'
@@ -194,11 +202,18 @@ def generate_viz(year_data, month_data, filename):
 
     # Box
     bdata = list()
-    for p in sorted(btop_ppl_years, key=btop_ppl_years.get, reverse=True):
-        bdata.append(byear_count_dict[p]['plot_obj_scatter'])
-        btrace_status['year_view'].append({
-                    'person': p,
-                })
+    if TOP_K_FORMAT is TopKFormat.GLOBAL_K:
+        for p in btop_ppl_years:
+            bdata.append(byear_count_dict[p[0]]['plot_obj_scatter'])
+            btrace_status['year_view'].append({
+                        'person': p,
+                    })
+    elif TOP_K_FORMAT is TopKFormat.MONTHLY:
+        for p in sorted(btop_ppl_years, key=btop_ppl_years.get, reverse=True):
+            bdata.append(byear_count_dict[p]['plot_obj_scatter'])
+            btrace_status['year_view'].append({
+                        'person': p,
+                    })
 
     for y in range(MESSENGER_START, MESSENGER_END + 1):
         y0 = str(y) + '-01-01'
@@ -259,7 +274,7 @@ def generate_viz(year_data, month_data, filename):
         bbutton_visibility_vectors.append(vector)
     # endregion
 
-    # Generate buttons and menus
+    # Generate buttons, menus, and UI
     # region
     # Scatter
     buttons = list()
@@ -270,21 +285,24 @@ def generate_viz(year_data, month_data, filename):
                 method = 'update',
                 args = [
                     {'visible': button_visibility_vectors[y - MESSENGER_START + 1]},
-                    {'title': 'Year ' + str(y)}
+                    {'title': 'FriendTrend - {}: {}'.format(title, str(y)) }
                     ]
+
                 ))
     buttons.append(dict(
-                label = 'Global',
+                label = 'Overview',
                 method = 'update',
                 args = [
                     {'visible': button_visibility_vectors[0]},
-                    {'title': 'Global'}
+                    {'title': 'FriendTrend - {}'.format(title) }
                     ]
+
                 ))
     updatemenus=list([
         dict(
             type = 'buttons',
             buttons=buttons,
+            active=11,
             direction = 'left',
             showactive = True,
             x = 0.5,
@@ -297,10 +315,10 @@ def generate_viz(year_data, month_data, filename):
             buttons=list([
             dict(label = 'Linear',
                  method = 'relayout',
-                 args = [dict(yaxis=dict(type='linear', autorange=True))]),
+                 args = [dict(yaxis=dict(type='linear', autorange=True, domain=[0.51, 1]), yaxis2=dict(domain=[0, 0.49]))]),
             dict(label = 'Log',
                  method = 'relayout',
-                 args = [dict(yaxis=dict(type='log', autorange=True))])]),
+                 args = [dict(yaxis=dict(type='log', autorange=True, domain=[0.51, 1]), yaxis2=dict(domain=[0, 0.49]))])]),
             direction = 'down',
             showactive = True,
             x = -0.075,
@@ -309,81 +327,7 @@ def generate_viz(year_data, month_data, filename):
             yanchor = 'top'
         )])
 
-    # Box
-    bbuttons = list()
-    for y in range(MESSENGER_START, MESSENGER_END + 1):
-        bbuttons.append(
-            dict(
-                label = y,
-                method = 'update',
-                args = [
-                    {'visible': bbutton_visibility_vectors[y - MESSENGER_START + 1]},
-                    {'title': 'Year ' + str(y)}
-                    ]
-                ))
-    bbuttons.append(dict(
-                label = 'Global',
-                method = 'update',
-                args = [
-                    {'visible': bbutton_visibility_vectors[0]},
-                    {'title': 'Global'}
-                    ]
-                ))
-
-    bupdatemenus=list([
-        dict(
-            type = 'buttons',
-            buttons=bbuttons,
-            direction = 'left',
-            showactive = True,
-            x = 0.5,
-            xanchor = 'auto',
-            y = -0.1,
-            yanchor = 'auto' 
-        ),
-        dict(
-            type='dropdown',
-            buttons=list([
-            dict(label = 'Linear',
-                 method = 'relayout',
-                 args = [dict(yaxis=dict(type='linear', autorange=True))]),
-            dict(label = 'Log',
-                 method = 'relayout',
-                 args = [dict(yaxis=dict(type='log', autorange=True))])]),
-            direction = 'down',
-            showactive = True,
-            x = -0.075,
-            xanchor = 'left',
-            y = 1,
-            yanchor = 'top'
-        )])
-    # endregion
-
-    # Set figure objects
-    # region
-    layout = go.Layout(
-		title='FriendTrend',
-		#autosize=True,
-		updatemenus=updatemenus,
-        #updatemenus2=bupdatemenus,
-		hovermode='closest',
-        barmode='stack',
-		showlegend=True,
-		yaxis=dict(
-			type='linear',
-			autorange=True
-		),
-        yaxis2=dict(
-			type='linear',
-			autorange=True
-		),
-        xaxis=dict(
-            type='date',
-            autorange=True # possibly no autorange
-        )
-    )
-
-    fig = tools.make_subplots(rows=2, cols=1, subplot_titles=('ScatterPlot', 'BarPlot'))
+    fig = tools.make_subplots(rows=2, cols=1)
 
     for t in data:
         fig.append_trace(t, 1, 1)
@@ -391,23 +335,27 @@ def generate_viz(year_data, month_data, filename):
         fig.append_trace(t, 2, 1)
 
     fig['layout'].update(
-        title='FriendTrend',
+        title='FriendTrend - ' + str(title),
 		autosize=True,
 		updatemenus=updatemenus,
 		hovermode='closest',
         barmode='stack',
 		showlegend=True,
+        legend=dict(traceorder='normal'),
 		yaxis=dict(
-			type='log',
-			autorange=True
+			type='linear',
+			autorange=True,
+            domain=[0.51, 1]
 		),
         yaxis2=dict(
 			type='linear',
-			autorange=True
+			autorange=True,
+            domain=[0, 0.49]
 		),
         xaxis=dict(
             type='date',
-            autorange=True # possibly no autorange
+            autorange=True,
+            visible=False
         ))
 
     config = {
@@ -416,10 +364,9 @@ def generate_viz(year_data, month_data, filename):
     #endregion
 
     # PLOT!
-    plotly.offline.plot(fig, auto_open=False, config=config, filename=filename)
+    plotly.offline.plot(fig, auto_open=True, config=config, filename=filename)
 
 if __name__== "__main__":
-    generate_viz('messages_yearly_scratch.json', 'messages_monthly_scratch.json', 'messages.html')
-    #generate_viz('days_interacted_yearly_scratch.json', 'days_interacted_monthly_scratch.json', 'daysinteracted.html')
-
-# see if you can append visibility (scatter box) for all together, shouldnt need 2 update menus
+    datasets = prepdata.main('data/messages/inbox/', 'Sebastian Rodriguez', False)
+    generate_viz(datasets.messages_yearly, datasets.messages_monthly, 'messages.html', 'Total Messages')
+    generate_viz(datasets.days_interacted_yearly, datasets.days_interacted_monthly, 'daysinteracted.html', 'Days Interacted')
