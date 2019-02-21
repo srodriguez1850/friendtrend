@@ -15,7 +15,10 @@ def main(data_path, username, write_to_file):
     for json_file in all_json_files:
         with open(json_file) as f:
             json_data = json.load(f)
-            json_data["my_friend_id"] = json_file.split("/")[-2]
+            if os.name == 'nt':
+                json_data["my_friend_id"] = json_file.split("\\")[0].split("/")[-1]
+            else:
+                json_data["my_friend_id"] = json_file.split("/")[-2]
             all_json_data.append(json_data)
 
     # print(len(all_json_data))
