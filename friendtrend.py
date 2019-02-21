@@ -317,7 +317,7 @@ def generate_viz(year_data, month_data, filename, title, hidenames, k, kformat):
             x = 0.5,
             xanchor = 'auto',
             y = -0.1,
-            yanchor = 'auto' 
+            yanchor = 'bottom' 
         ),
         dict(
             type='dropdown',
@@ -330,7 +330,7 @@ def generate_viz(year_data, month_data, filename, title, hidenames, k, kformat):
                  args = [dict(yaxis=dict(type='log', autorange=True, domain=[0.51, 1]), yaxis2=dict(domain=[0, 0.49]))])]),
             direction = 'down',
             showactive = True,
-            x = -0.075,
+            x = -0.1,
             xanchor = 'left',
             y = 1,
             yanchor = 'top'
