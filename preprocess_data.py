@@ -181,23 +181,23 @@ def process_messages_by_month(all_msgs):
 
     old_years = list(msgs_by_year.keys())
     for old_year in old_years:
-        print(old_year)
+        # print(old_year)
         new_year = str(old_year) + "-01-01"
 
         old_months = list(msgs_by_year[old_year].keys())
         for old_month in old_months:
-            print(old_month)
+            # print(old_month)
             if old_month < 10:
                 old_month_str = "0" + str(old_month)
             else:
                 old_month_str = str(old_month)
             new_month = str(old_year) + "-" + old_month_str + "-01"
             msgs_by_year[old_year][new_month] = msgs_by_year[old_year].pop(old_month)
-            print(new_month)
+            # print(new_month)
 
         msgs_by_year[new_year] = msgs_by_year.pop(old_year)
-        print(new_year)
-        print("\n\n\n\n")
+        # print(new_year)
+        # print("\n\n\n\n")
 
     # print(msgs_by_year.keys())
 
@@ -245,23 +245,23 @@ def process_days_interacted_by_month(all_msgs):
 
     old_years = list(msgs_by_year.keys())
     for old_year in old_years:
-        print(old_year)
+        # print(old_year)
         new_year = str(old_year) + "-01-01"
 
         old_months = list(msgs_by_year[old_year].keys())
         for old_month in old_months:
-            print(old_month)
+            # print(old_month)
             if old_month < 10:
                 old_month_str = "0" + str(old_month)
             else:
                 old_month_str = str(old_month)
             new_month = str(old_year) + "-" + old_month_str + "-01"
             msgs_by_year[old_year][new_month] = msgs_by_year[old_year].pop(old_month)
-            print(new_month)
+            # print(new_month)
 
         msgs_by_year[new_year] = msgs_by_year.pop(old_year)
-        print(new_year)
-        print("\n\n\n\n")
+        # print(new_year)
+        # print("\n\n\n\n")
 
     # print(msgs_by_year.keys())
 
