@@ -18,9 +18,5 @@
 * The file will then open two .html files on completion, one for total message count, and one for days interacted.
 * Enjoy!
 
-## Contributions
-
-* Prashant Jayannavar: viz design ideas, Messenger dump parser, debugging
-* Dennis Wang: viz design ideas, code viz aesthetics
-* Sebastian Rodriguez: code, viz design feedback, debugging
-* India Owens: code, viz design feedback, debugging
+## Bugs
+* If there's no message data for a year, it'll throw a KeyError exception. If there's no data at the edge of the ranges, simply change MESSENGER_START and MESSENGER_END to a smaller range.
